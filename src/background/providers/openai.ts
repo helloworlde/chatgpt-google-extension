@@ -16,7 +16,7 @@ export class OpenAIProvider implements Provider {
 
   async generateAnswer(params: GenerateAnswerParams) {
     let result = ''
-    await fetchSSE('https://api.openai.com/v1/completions', {
+    await fetchSSE('https://api.openai.hellowood.dev/v1/chat/completions', {
       method: 'POST',
       signal: params.signal,
       headers: {
@@ -24,8 +24,13 @@ export class OpenAIProvider implements Provider {
         Authorization: `Bearer ${this.token}`,
       },
       body: JSON.stringify({
-        model: this.model,
-        prompt: this.buildPrompt(params.prompt),
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'user',
+            content: params.prompt,
+          },
+        ],
         stream: true,
         max_tokens: 2048,
       }),
@@ -38,8 +43,8 @@ export class OpenAIProvider implements Provider {
         let data
         try {
           data = JSON.parse(message)
-          const text = data.choices[0].text
-          if (text === '<|im_end|>' || text === '<|im_sep|>') {
+          const text = data.choices[0].delta.content
+          if (text === '<|im_end|>' || text === '<|im_sep|>' || text == undefined) {
             return
           }
           result += text
